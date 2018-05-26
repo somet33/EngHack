@@ -3,13 +3,14 @@ const send = require('../../helpers/send.js')
 
 /**
 * motion sensor
-* @param {any} sender
-* @param {any} receiver
-* @param {any} message
+* @param {string} sender
+* @param {string} receiver
+* @param {string} message
+* @param {string} createdDateTime
 * @returns {any}
 */
 module.exports = async (sender = '', receiver = '', message = '', createdDateTime = '', context) => {
-  return (
+  return send(
     receiver,
     '16478662196',
     message
