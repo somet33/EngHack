@@ -1,7 +1,7 @@
 const lib = require('lib')({ token: process.env.STDLIB_TOKEN })
 const send = require('../../helpers/send.js')
-const routineFile = '../../user-settings/routine.json'
-const routine = require(routineFile)
+const settingsFile = '../../user-settings/settings.json'
+const settings = require(settingsFile)
 const fs = require('fs')
 
 /**
@@ -20,23 +20,34 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
   var promises = []
   
   if(action == "add"){
-      if (routine.functions.indexOf(func) !== -1){
+      if (settings.routine.indexOf(func) !== -1){
         message = "\'" + func + "\'" + " already exists in routine"
       } else {
-        routine.functions.push(func);
+        settings.routine.push(func);
         message = "added \'" + func +"\'" + "to routine"
       }
   } else if (action == "delete"){
-    var index = routine.functions.indexOf(func);
+    var index = settings.routine.indexOf(func);
     if (index !== -1){
-        routine.functions.splice(index, 1)
+        settings.routine.splice(index, 1)
         message = "removed \'" + func +"\'" + "from routine"
     } else {
         message = "\'" + func + "\'" + "is not in routine"
     }
+  } else if (action == "list"){
+    var list = ''
+    for (var i = 0; i < settings.routine.length; i++){
+        list += (i + 1) + '. ' + settings.routine[i] + '\n'
+    }
+    return send(
+        receiver,
+        sender,
+        list
+    )
+
   } else {
-    for (var i = 0; i < routine.functions.length; i++){
-        var name = routine.functions[i]
+    for (var i = 0; i < settings.routine.length; i++){
+        var name = settings.routine[i]
         var result = await lib[`${context.service.identifier}.messaging.${name}`]({
             sender: sender,
             message: '',
@@ -45,24 +56,6 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
         })
         promises.push(result);
     }
-  }
-
-  if (action == "add"  || action == "delete"){
-    return new Promise(function(resolve, reject){
-            fs.writeFile('./user-settings/routine.json', JSON.stringify(routine), function(err){
-                if (err){
-                    reject(err);
-                }
-                resolve();
-            });
-    }).then(function(result){
-        return send(
-            receiver,
-            sender,
-            message
-        )
-    });
-  } else {
     return Promise.all(promises).then(function(result){
         return send(
             receiver,
@@ -70,6 +63,22 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
             "routine finished"
         )
     })
+  }
 
+  if (action == "add"  || action == "delete"){
+    return new Promise(function(resolve, reject){
+        fs.writeFile('../../user-settings/settings.json', JSON.stringify(routine), function(err){
+            if (err){
+                reject(err);
+            }
+            resolve();
+        });
+    }).then(function(result){
+        return send(
+            receiver,
+            sender,
+            message
+        )
+    });
   }
 };
