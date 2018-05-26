@@ -19,22 +19,7 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
   var message = ''
   var promises = []
   
-  if(action == "add"){
-      if (settings.routine.indexOf(func) !== -1){
-        message = "\'" + func + "\'" + " already exists in routine"
-      } else {
-        settings.routine.push(func);
-        message = "added \'" + func +"\'" + "to routine"
-      }
-  } else if (action == "delete"){
-    var index = settings.routine.indexOf(func);
-    if (index !== -1){
-        settings.routine.splice(index, 1)
-        message = "removed \'" + func +"\'" + "from routine"
-    } else {
-        message = "\'" + func + "\'" + "is not in routine"
-    }
-  } else if (action == "list"){
+  if (action == "list"){
     var list = ''
     for (var i = 0; i < settings.routine.length; i++){
         list += (i + 1) + '. ' + settings.routine[i] + '\n'
@@ -63,22 +48,5 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
             "routine finished"
         )
     })
-  }
-
-  if (action == "add"  || action == "delete"){
-    return new Promise(function(resolve, reject){
-        fs.writeFile('../../user-settings/settings.json', JSON.stringify(routine), function(err){
-            if (err){
-                reject(err);
-            }
-            resolve();
-        });
-    }).then(function(result){
-        return send(
-            receiver,
-            sender,
-            message
-        )
-    });
   }
 };
