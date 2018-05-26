@@ -1,6 +1,8 @@
 const lib = require('lib')({ token: process.env.STDLIB_TOKEN })
 const https = require('https')
 const send = require('../../helpers/send.js')
+const settingsFile = '../../user-settings/settings.json'
+const settings = require(settingsFile)
 
 /**
 * weather handler, responds if user texts "weather"
@@ -12,30 +14,39 @@ const send = require('../../helpers/send.js')
 * @returns {any}
 */
 module.exports = async (sender = '', receiver = '', message = '', createdDatetime = '', context) => {
-    console.log(sender)
+    //console.log(sender)
     var apicall = 'https://maps.googleapis.com/maps/api/directions/json?origin=<userOrigin>&destination=<userDestination>&alternatives=true&mode=transit&transit=bus&key=AIzaSyABIq79BuPfXIQcoWTfj9I1D3fU3X8DCf4'
+    var output = '';
+
+    if(message != ''){
+      var split = message.split("-");
+      if(split.length>1){
+        apicall = apicall.replace('<userOrigin>', split[0]).replace('<userDestination>', split[1]);
+      }else{
+        return send(
+            receiver,
+            sender,
+            "Please Enter Bus in the form \"*bus :<origin>-<destination>\""
+        )
+      }
+    }else{
+      var split = settings.defaultBus.toString().split("-");
+      apicall = apicall.replace('<userOrigin>', split[0]).replace('<userDestination>', split[1]);
+    }
 
     return new Promise(function(resolve, reject){
-        if(message != ''){
-          var split = message.split("-");
-          console.log(split[0]+" and "+split[1]);
-          apicall = apicall.replace('<userOrigin>', split[0]).replace('<userDestination>', split[1]);
-          console.log(apicall);
-        }else{
-          apicall = apicall = 'https://maps.googleapis.com/maps/api/directions/json?origin=181LesterStreet,Waterloo&destination=OpentextCorporation,Waterloo>&alternatives=true&mode=transit&transit=bus&key=AIzaSyABIq79BuPfXIQcoWTfj9I1D3fU3X8DCf4'
-        }
+
         https.get(apicall, function (res){
 
             res.setEncoding('utf8');
             let rawData = '';
-            //res.on('data', (chunk) => { rawData += chunk; });
+
             res.on('data', function(data){
                 rawData += data;
             })
             res.on('end', () => {
               try {
                 const parsedData = JSON.parse(rawData);
-                //console.log(parsedData.routes[0].legs[0].start_address);
                 resolve(parsedData);
               } catch (e) {
                 console.error(e.message);
@@ -45,28 +56,27 @@ module.exports = async (sender = '', receiver = '', message = '', createdDatetim
         });
 
     }).then(function(result){
-       //console.log(string);
-       // console.log(weather);
-       //console.log('Full temp ' + require('util').inspect(result, { depth: null }));
-        //var message = "Bus: " + result.geocoded_waypoints[1].geocoder_status;
-        //console.log("ROUTES: "+result.routes.length)
-        var message = "From: " + result.routes[0].legs[0].start_address + "\nTo: "+ result.routes[0].legs[0].end_address ;
-        for(var j = 0; j<result.routes.length; ++j){
-          message += "\n\n"
-          var leg = result.routes[j].legs[0]
-          for(var i = 0; i<leg.steps.length; ++i){
-            if(leg.steps[i].travel_mode=="TRANSIT"){
-              message += "\nDeparture: " + leg.steps[i].transit_details.departure_time.text + " from " + leg.steps[i].transit_details.departure_stop.name;
-              message += "\nArrival: " +leg.steps[i].transit_details.arrival_time.text + " at " + leg.steps[i].transit_details.arrival_stop.name;
-              message += "\nLine: " +leg.steps[i].transit_details.line.short_name;
+
+        try{
+          output = "From: " + result.routes[0].legs[0].start_address + "\nTo: "+ result.routes[0].legs[0].end_address ;
+          for(var j = 0; j<result.routes.length; ++j){
+            output += "\n\n"
+            var leg = result.routes[j].legs[0]
+            for(var i = 0; i<leg.steps.length; ++i){
+              if(leg.steps[i].travel_mode=="TRANSIT"){
+                output += "\nDeparture: " + leg.steps[i].transit_details.departure_time.text + " from " + leg.steps[i].transit_details.departure_stop.name;
+                output += "\nArrival: " +leg.steps[i].transit_details.arrival_time.text + " at " + leg.steps[i].transit_details.arrival_stop.name;
+                output += "\nLine: " +leg.steps[i].transit_details.line.short_name;
+              }
             }
           }
+        }catch(e){
+          output = "Invalid command: try re-wording the 'origin' and 'destination' name/address"
         }
-        console.log(message);
         return send(
             receiver,
             sender,
-            message
+            output
         )
     })
 }
