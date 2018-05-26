@@ -13,6 +13,6 @@ module.exports = async (sender = '', receiver = '', message = '', createdDateTim
   return send(
     receiver,
     '16478662196',
-    message
+    'someone is at your door :v'
   )
 };

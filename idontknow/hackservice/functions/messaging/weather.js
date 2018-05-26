@@ -29,11 +29,11 @@ module.exports = async (sender = '', receiver = '', message = '', createdDatetim
         });
 
     }).then(function(result){
-        var message = "weather: " + result.main.temp.toFixed(2) + "C"
+        var weatherText = "weather: " + result.main.temp.toFixed(2) + "C"
         return send(
             receiver,
             sender,
-            message
+            weatherText
         )
     })
 }
