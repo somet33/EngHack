@@ -23,7 +23,7 @@ module.exports = async (sender = '', receiver = '', message = '_', createdDateti
   try {
     result = await lib[`${context.service.identifier}.messaging.${handler}`]({
       sender: sender,
-      message: handler +','+dataText,
+      message: dataText,
       receiver: receiver,
       createdDatetime: createdDatetime
     })
