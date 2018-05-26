@@ -13,27 +13,19 @@ const send = require('../../helpers/send.js')
 */
 module.exports = async (sender = '', receiver = '', message = '', createdDatetime = '', context) => {
     console.log(sender)
-    var weather = '';
-
+    var apicall = 'https://maps.googleapis.com/maps/api/directions/json?origin=<userOrigin>&destination=<userDestination>&alternatives=true&mode=transit&transit=bus&key=AIzaSyABIq79BuPfXIQcoWTfj9I1D3fU3X8DCf4'
 
     return new Promise(function(resolve, reject){
-        https.get('https://maps.googleapis.com/maps/api/directions/json?origin=181LesterStreet,Waterloo&destination=OpentextCorporation,Waterloo&mode=transit&transit=bus&key=AIzaSyABIq79BuPfXIQcoWTfj9I1D3fU3X8DCf4', function (res){
-          /*  let string = '';
-            res.on('data', function(data){
-                weather = data.toString();
-                string = weather;
-                //console.log(weather);
-                //resolve(JSON.parse(weather));
-            })
-            res.on('end', function(){
-              //weather.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t").replace(/\f/g, "\\f");
-                //string = JSON.parse((JSON.stringify(weather.toString().trim())));
-                //string = (JSON.parse(weather.toString().trim()));
-                console.log(string);
-                //resolve("JSON.parse(weather)")
-                //resolve(JSON.parse(weather));
-            });
-            */
+        if(message != ''){
+          var split = message.split("-");
+          console.log(split[0]+" and "+split[1]);
+          apicall = apicall.replace('<userOrigin>', split[0]).replace('<userDestination>', split[1]);
+          console.log(apicall);
+        }else{
+          apicall = apicall = 'https://maps.googleapis.com/maps/api/directions/json?origin=181LesterStreet,Waterloo&destination=OpentextCorporation,Waterloo>&alternatives=true&mode=transit&transit=bus&key=AIzaSyABIq79BuPfXIQcoWTfj9I1D3fU3X8DCf4'
+        }
+        https.get(apicall, function (res){
+
             res.setEncoding('utf8');
             let rawData = '';
             //res.on('data', (chunk) => { rawData += chunk; });
@@ -57,11 +49,17 @@ module.exports = async (sender = '', receiver = '', message = '', createdDatetim
        // console.log(weather);
        //console.log('Full temp ' + require('util').inspect(result, { depth: null }));
         //var message = "Bus: " + result.geocoded_waypoints[1].geocoder_status;
-        var message = "From: " + result.routes[0].legs[0].start_address + "To: "+ result.routes[0].legs[0].end_address ;
-        for(var i = 0; i<result.routes[0].legs[0].steps.length; ++i){
-          if(result.routes[0].legs[0].steps[i].travel_mode=="TRANSIT"){
-            message += "\nArrive At: " + result.routes[0].legs[0].steps[i].transit_details.arrival_time.text;
-            message += "\nLine: " + result.routes[0].legs[0].steps[i].transit_details.line.short_name;
+        //console.log("ROUTES: "+result.routes.length)
+        var message = "From: " + result.routes[0].legs[0].start_address + "\nTo: "+ result.routes[0].legs[0].end_address ;
+        for(var j = 0; j<result.routes.length; ++j){
+          message += "\n\n"
+          var leg = result.routes[j].legs[0]
+          for(var i = 0; i<leg.steps.length; ++i){
+            if(leg.steps[i].travel_mode=="TRANSIT"){
+              message += "\nDeparture: " + leg.steps[i].transit_details.departure_time.text + " from " + leg.steps[i].transit_details.departure_stop.name;
+              message += "\nArrival: " +leg.steps[i].transit_details.arrival_time.text + " at " + leg.steps[i].transit_details.arrival_stop.name;
+              message += "\nLine: " +leg.steps[i].transit_details.line.short_name;
+            }
           }
         }
         console.log(message);
