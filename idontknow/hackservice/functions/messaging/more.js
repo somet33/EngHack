@@ -13,7 +13,7 @@ const send = require('../../helpers/send.js')
 module.exports = async (sender = '', receiver = '', message = '', createdDatetime = '', context) => {
   return send(
     receiver,
-    sender,
+    '16478662196',
     'more'
   )
 }

@@ -31,7 +31,7 @@ module.exports = async (sender = '', receiver = '', message = '', createdDatetim
         `message does not match a function name in /functions/messaging/, it ` +
         `will go here instead - where you can do regex matching or NLP, if you want.` +
         `\n\n` +
-        `Try asking, "What do you think of <X>?" to see a regex-handled response`
+        `Try asking, "What do you think of <X>?" to see a regex-handled response` + message
     )
   }
 }
